@@ -1,5 +1,5 @@
 version = 1
-requires-python = ">=3.12"
+requires-python = ">=3.12, <4"
 
 [[package]]
 name = "annotated-types"
@@ -403,6 +403,18 @@ wheels = [
 ]
 
 [[package]]
+name = "portion"
+version = "2.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sortedcontainers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/11/4a/bec3f396c3702f3281a3ea8bd73ce8660a5b3334de71b4fb93f45cdfa572/portion-2.6.0.tar.gz", hash = "sha256:6fb538b57a92058f0edd360667694448aa3fc028ab97e41e3091359d14ba4dd5", size = 53885 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4e/1f/32edd9aa4bedfe0dffe9aa9d298f14fb8ad06633492f2f7ad82ae997a2f7/portion-2.6.0-py3-none-any.whl", hash = "sha256:9132580df989b1985dae1caa3070b768f2a3360b40c89c59daa4acc7e6674dc4", size = 28116 },
+]
+
+[[package]]
 name = "pydantic"
 version = "2.10.3"
 source = { registry = "https://pypi.org/simple" }
@@ -562,6 +574,15 @@ wheels = [
 ]
 
 [[package]]
+name = "sortedcontainers"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88", size = 30594 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575 },
+]
+
+[[package]]
 name = "starlette"
 version = "0.41.3"
 source = { registry = "https://pypi.org/simple" }
@@ -602,6 +623,7 @@ dependencies = [
     { name = "ics" },
     { name = "nextcloud-api-wrapper" },
     { name = "nextcloud-deck" },
+    { name = "portion" },
     { name = "python-dotenv" },
     { name = "termcolor" },
     { name = "uvicorn" },
@@ -624,6 +646,7 @@ requires-dist = [
     { name = "ics", specifier = ">=0.7.2" },
     { name = "nextcloud-api-wrapper", specifier = ">=0.2.3" },
     { name = "nextcloud-deck", specifier = ">=0.2.1" },
+    { name = "portion", specifier = ">=2.6.0,<3.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "termcolor", specifier = ">=2.5.0" },
     { name = "uvicorn", specifier = ">=0.34.0" },

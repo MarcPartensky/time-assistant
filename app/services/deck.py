@@ -4,6 +4,7 @@ from deck.api import NextCloudDeckAPI
 from deck.models import Card, Board, Stack, Label
 from requests.auth import HTTPBasicAuth
 from app.services.logger import logger
+from typing import List
 from app.env import *
 
 auth = HTTPBasicAuth(os.environ["NEXTCLOUD_USER"], os.environ["NEXTCLOUD_PASSWORD"])
@@ -61,33 +62,60 @@ def get_boards():
     return nc.get_boards()
 
 
-def get_board_by_name(board_name: str):
+def get_board_by_name(board_name: str) -> Board:
     board_id = get_board_id_by_name(board_name)
     return nc.get_board(board_id)
 
 
-def get_board_labels(board_name: str):
+def get_labels_by_board_name(board_name: str) -> List[Label]:
     board_id = get_board_id_by_name(board_name)
     board = nc.get_board(board_id)
     return board.labels
 
 
-def get_board_stack_by_name(board_name: str, stack_name: str):
+def get_stack_by_board_and_stack_names(board_name: str, stack_name: str) -> Stack:
     board_id = get_board_id_by_name(board_name)
     stack_id = get_stack_id_by_name(board_id, stack_name)
     stack = nc.get_stack(board_id, stack_id)
     return stack
 
 
-def update_board_label_color(board_name: str, label_name: str, color: str):
+def get_cards_by_board(board: Board) -> List[Card]:
+    cards = []
+    stacks = nc.get_stacks(board.id)
+    for stack in stacks:
+        cards.extend(nc.get_cards_from_stack(stack_id=stack.id, board_id=board.id))
+    return cards
+
+
+# def get_cards_of_stack(stack: Stack, board: Board)
+#     return nc.get_cards_from_stack(stack.id, board:)
+
+
+def get_stacks_by_board(board: Board) -> List[Stack]:
+    return nc.get_stacks(board.id)
+
+
+def update_board_label_color(board_name: str, label_name: str, color: str) -> Label:
     board_id = get_board_id_by_name(board_name)
-    # stack_id = get_stack_id_by_name(board_id, stack_name)
+    # stack_id = get_stack_id_by_name(board_id, stack_name)
     label_id = get_label_id_by_name(board_id, label_name)
     if not label_id:
         raise LogException(status_code=500, detail="Label doesn't exist")
     label = nc.get_label(board_id, label_id)
     label = nc.update_label(board_id, label_id, title=label.title, color=color)
     return label
+
+
+def reorder_card(*args, **kwargs):
+    return nc.reorder_card(*args, **kwargs)
+
+
+# def update_card(card_id: int, order: int, title: str, owner: str):
+# card_id=card.id,
+# order=50,
+# title=card.title,
+# owner=card.owner,
 
 
 # def archive_completed(board_name, str, stack_name: str):

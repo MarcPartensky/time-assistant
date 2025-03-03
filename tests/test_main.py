@@ -30,3 +30,6 @@ def test_websocket_echo():
         websocket.send_text("Hello WebSocket")
         response = websocket.receive_text()
         assert response == "Client #test-client dit: Hello WebSocket"
+
+
+def create_event_and_delete():
