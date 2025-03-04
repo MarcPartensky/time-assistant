@@ -1,0 +1,4 @@
+services:
+  time-assistant:
+    image: marcpartensky/time-assistant
+    build: .
