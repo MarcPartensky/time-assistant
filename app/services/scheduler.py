@@ -54,7 +54,12 @@ class Scheduler:
         self.work_calendar = "Taff"
         self.personal_calendar = "Personal"
         self.zoneinfo = ZoneInfo("Europe/Paris")
-        self.priorities = ["Top priority", "High priority"]
+        self.priorities = [
+            "Top priority",
+            "High priority",
+            "Action needed",
+            "Low priority",
+        ]
         self.category = "Deck"  # Tag given on all created events
 
     def hydrate(self, board: Board):
