@@ -27,5 +27,5 @@ dev-dependencies = [
 ]
 
 [tool.poetry.group.dev.dependencies]
-granian = "^2.0.0"
+granian = {extras = ["reload"], version = "^2.0.0"}
 
