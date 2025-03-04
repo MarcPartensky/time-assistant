@@ -30,7 +30,7 @@ async def root():
 
 @router.get("/live")
 async def health():
-    return "OK"
+    return {"message": "OK"}
 
 
 @router.post("/echo")
