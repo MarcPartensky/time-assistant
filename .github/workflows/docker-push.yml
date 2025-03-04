@@ -45,28 +45,6 @@ jobs:
         push: true
         tags: marcpartensky/time-assistant:latest
 
-  test-python-versions:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.12']
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-      - uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}
-      - name: Install requirements
-        run: pip install -r requirements.txt
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
