@@ -1,0 +1,86 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - master
+    # Publish `v1.2.3` tags as releases.
+    tags:
+      - v*
+
+  pull_request:
+    branches:
+      - master
+
+env:
+  IMAGE_NAME: time-assistant
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the tag
+      id: tag
+      run: echo "::set-output name=tag::$(git rev-parse --short HEAD).$(date +'%Y-%m-%d')"
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Build and push with tag
+      id: tag-build
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: marcpartensky/time-assistant:v${{ github.run_number }}.${{ steps.tag.outputs.tag }}
+    - name: Build and push latest
+      id: latest-build
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: marcpartensky/time-assistant:latest
+
+  test-python-versions:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.12']
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}
+      - name: Install requirements
+        run: pip install -r requirements.txt
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+    - name: executing remote ssh commands using password
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY}}
+        port: ${{ secrets.PORT }}
+        script: |
+          cd ~/git/docker/services
+          docker compose -f time-assistant.yml pull
+          docker compose -f time-assistant.yml up -d --force-recreate time-assistant
