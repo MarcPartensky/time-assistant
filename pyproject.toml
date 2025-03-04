@@ -13,9 +13,9 @@ dependencies = [
     "nextcloud-deck>=0.2.1",
     "python-dotenv>=1.0.1",
     "termcolor>=2.5.0",
-    "uvicorn>=0.34.0",
     "websockets>=14.1",
     "portion (>=2.6.0,<3.0.0)",
+    "hypercorn (>=0.17.3,<0.18.0)",
 ]
 
 [tool.uv]
@@ -25,3 +25,7 @@ dev-dependencies = [
     "pyright>=1.1.390",
     "pytest>=8.3.4",
 ]
+
+[tool.poetry.group.dev.dependencies]
+granian = "^2.0.0"
+
