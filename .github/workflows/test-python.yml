@@ -7,6 +7,8 @@ on:
     # Publish `v1.2.3` tags as releases.
     tags:
       - v*
+    paths:
+      - 'app/**'  # Trigger only when files in the app folder change
 
   pull_request:
     branches:
