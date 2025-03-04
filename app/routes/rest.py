@@ -28,6 +28,11 @@ async def root():
     return {"message": "Bienvenue dans mon projet FastAPI !"}
 
 
+@router.get("/live")
+async def health():
+    return "OK"
+
+
 @router.post("/echo")
 async def echo_message(message: Message):
     return {"message": message.text}
