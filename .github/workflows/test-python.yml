@@ -1,0 +1,36 @@
+name: Test python
+
+on:
+  push:
+    branches:
+      - master
+    # Publish `v1.2.3` tags as releases.
+    tags:
+      - v*
+
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test-python-versions:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.12']
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}
+      - name: Install requirements
+        run: pip install -r requirements.txt
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
