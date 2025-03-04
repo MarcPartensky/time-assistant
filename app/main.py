@@ -16,6 +16,13 @@ app.include_router(websocket_router)
 
 # Point d'entrée principal
 if __name__ == "__main__":
-    import uvicorn
+    from granian import Granian
+    from granian.constants import Interfaces
 
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    Granian(
+        target="app.main:app",
+        address="0.0.0.0",
+        port=8000,
+        log_access=True,
+        interface=Interfaces.ASGI,
+    ).serve()
