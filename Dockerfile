@@ -1,19 +1,26 @@
-FROM python:3.12-alpine
+# Stage 1: Builder (install dependencies)
+FROM python:3.12-slim as builder
 
-ENV PORT=8000
-ENV HOST=0.0.0.0
+RUN apt-get update && apt-get install -y curl && \
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    apt-get purge -y curl && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.cargo/bin:$PATH"
 
 WORKDIR /app
+COPY requirements.txt .
+RUN uv pip install -r requirements.txt --target /app/dependencies
 
-RUN pip install hypercorn
+# Stage 2: Runtime (minimal image)
+FROM python:3.12-slim
 
-COPY requirements.txt ./
-RUN pip install -r requirements.txt
+WORKDIR /app
 COPY ./app /app
 
-# ENV PATH="$PATH:/root/.local/bin"
+# Copy dependencies from builder
+COPY --from=builder /dependencies /app/dependencies
+# Add dependencies to Python path
+ENV PYTHONPATH="/app/dependencies:$PYTHONPATH"
 
-WORKDIR /
-COPY ./hypercorn.toml ./
-
-ENTRYPOINT ["hypercorn", "-c", "hypercorn.toml", "app.main:app"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
