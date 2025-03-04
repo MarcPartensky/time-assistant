@@ -1,4 +1,3 @@
-# Stage 1: Builder (install dependencies)
 FROM python:3.12-slim as builder
 
 RUN apt-get update && apt-get install -y curl && \
@@ -9,18 +8,16 @@ RUN apt-get update && apt-get install -y curl && \
 ENV PATH="/root/.cargo/bin:$PATH"
 
 WORKDIR /app
+RUn pip install uv granian
 COPY requirements.txt .
-RUN uv pip install -r requirements.txt --target /app/dependencies
+RUN uv pip install -r requirements.txt --target /opt/dependencies
 
-# Stage 2: Runtime (minimal image)
+
 FROM python:3.12-slim
 
-WORKDIR /app
+ENV PYTHONPATH="/opt/dependencies:$PYTHONPATH"
+COPY --from=builder /opt/dependencies /opt/dependencies
+RUN pip install granian
+
 COPY ./app /app
-
-# Copy dependencies from builder
-COPY --from=builder /dependencies /app/dependencies
-# Add dependencies to Python path
-ENV PYTHONPATH="/app/dependencies:$PYTHONPATH"
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
+ENTRYPOINT ["granian", "--interface", "asgi", "--host", "0.0.0.0", "--port", "8000", "--http", "auto", "app.main:app"]

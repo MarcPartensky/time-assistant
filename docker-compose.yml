@@ -2,3 +2,4 @@ services:
   time-assistant:
     image: marcpartensky/time-assistant
     build: .
+    env_file: .env
