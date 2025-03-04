@@ -16,13 +16,19 @@ app.include_router(websocket_router)
 
 # Point d'entrée principal
 if __name__ == "__main__":
+    import os
+
     from granian import Granian
     from granian.constants import Interfaces
 
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
     Granian(
         target="app.main:app",
-        address="0.0.0.0",
-        port=8000,
-        log_access=True,
         interface=Interfaces.ASGI,
+        address=os.environ["GRANIAN_HOST"],
+        port=int(os.environ["GRANIAN_PORT"]),
+        log_access=bool(os.environ["GRANIAN_LOG_ACCESS_ENABLED"]),
     ).serve()

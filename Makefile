@@ -10,5 +10,7 @@ run:
 	granian app.main --interface asgi --host 0.0.0.0 --access-log --reload
 test:
 	uv run pytest tests/
-export:
-	poetry export -o requirements.txt
+push:
+	uv export -o requirements.txt
+	docker compose build
+	docker compose push
