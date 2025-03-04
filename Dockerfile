@@ -20,5 +20,8 @@ COPY --from=builder /opt/dependencies /opt/dependencies
 RUN pip install granian
 
 COPY ./app /app
+
+HEALTHCHECK CMD curl -f localhost:8000/live || exit 1
+
 # ENTRYPOINT ["granian", "--interface", "asgi", "--host", "0.0.0.0", "--port", "8000", "--http", "auto", "app.main:app"]
 ENTRYPOINT ["python", "-m", "app.main"]
