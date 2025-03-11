@@ -111,6 +111,19 @@ def reorder_card(*args, **kwargs):
     return nc.reorder_card(*args, **kwargs)
 
 
+# def archive_done_tasks(board_name: str) -> List[Card]:
+#     """Read all the cards from the board and find the tasks that are done.
+#     Then archive them and return them."""
+#     # L'API nextcloud deck ne permet pas de manipuler le champs done des cartes.
+#     done_cards = []
+#     board = get_board_by_name(board_name)
+#     stacks = get_stacks_by_board(board)
+#     for stack in stacks:
+#         card = stack.cards[0]
+
+#     return done_cards
+
+
 # def update_card(card_id: int, order: int, title: str, owner: str):
 # card_id=card.id,
 # order=50,

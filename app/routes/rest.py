@@ -188,3 +188,8 @@ async def clean(days: int = 1):
     t1 = datetime.datetime.now(ZoneInfo("Europe/Paris"))
     t2 = t1 + datetime.timedelta(days)
     return scheduler.clean_deck_events(t1, t2)
+
+
+# @router.get("/archive-done-tasks/{board_name}")
+# async def archive_done_tasks(board_name: str):
+#     return deck.archive_done_tasks(board_name)
