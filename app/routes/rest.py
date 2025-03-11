@@ -15,9 +15,9 @@ from app.services.scheduler import Scheduler
 import datetime
 import portion as P
 
-from env import TIMEZONE
+from app.env import settings
 
-ZONEINFO = ZoneInfo(TIMEZONE)
+ZONEINFO = ZoneInfo(settings.timezone)
 
 router = APIRouter()
 

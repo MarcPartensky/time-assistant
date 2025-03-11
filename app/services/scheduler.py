@@ -32,11 +32,6 @@ class TimeGap(NamedTuple):
         return "TG" + str((self.t1, self.t2))
 
 
-# Class TimeGaps(List(TimeGap)):
-
-#     def __
-
-
 class Scheduler:
     """Planifie le calendrier par ordre de priorité."""
 
@@ -77,49 +72,6 @@ class Scheduler:
             cards.sort(key=lambda card: card.order)
             sorted_cards.extend(cards)
         self.cards = sorted_cards
-
-    # def get_gaps(self, t1: datetime, t2: datetime) -> List[TimeGap]:
-    #     if t1 >= t2:
-    #         return []
-    #     events = [
-    #         (event.begin.astimezone(self.zoneinfo), event.end.astimezone(self.zoneinfo))
-    #         for event in self.events
-    #     ]
-
-    #     valid_events = [(s, e) for (s, e) in events if s < e]
-    #     sorted_events = sorted(valid_events, key=lambda x: x[0])
-
-    #     # Merging overlapping events
-    #     merged = []
-    #     for event in sorted_events:
-    #         if not merged:
-    #             merged.append(event)
-    #         else:
-    #             last_start, last_end = merged[-1]
-    #             current_start, current_end = event
-    #             if current_start <= last_end:
-    #                 merged[-1] = (last_start, max(last_end, current_end))
-    #             else:
-    #                 merged.append(event)
-
-    #     # Clip the events starting before t1 and after t2
-    #     clipped = []
-    #     for start, end in merged:
-    #         clipped_start = max(start, t1)
-    #         clipped_end = min(end, t2)
-    #         if clipped_start < clipped_end:
-    #             clipped.append((clipped_start, clipped_end))
-
-    #     gaps = []
-    #     prev_end = t1
-    #     for start, end in clipped:
-    #         if start > prev_end:
-    #             gaps.append(TimeGap(prev_end, start))
-    #         prev_end = max(prev_end, end)
-    #     if prev_end < t2:
-    #         gaps.append(TimeGap(prev_end, t2))
-
-    #     return gaps
 
     def get_gaps(self, t1: datetime, t2: datetime) -> List[P.Interval]:
         """Trouve les disponibilités entre les événements calendrier."""
@@ -302,58 +254,6 @@ class Scheduler:
         trimmed = gaps_union & work_hours
 
         return list(trimmed) if not trimmed.empty else []
-
-    # def schedule(self, t1: datetime, t2: datetime) -> List[SmartEvent]:
-    #     self.clean_deck_events(t1, t2)
-    #     gaps = self.get_gaps(t1, t2)
-    #     gaps = self.trim_timegaps(gaps)
-
-    #     if not gaps or not self.cards:
-    #         return []
-
-    #     # Aplatir les intervalles composés
-    #     atomic_gaps = []
-    #     for gap in gaps:
-    #         atomic_gaps.extend(gap)
-
-    #     events = []
-    #     card_iter = iter(self.cards)
-
-    #     try:
-    #         current_card = next(card_iter)
-    #         current_duration = self.estimate_duration(current_card)
-
-    #         for gap in atomic_gaps:
-    #             remaining_gap = gap.upper - gap.lower
-    #             while remaining_gap > timedelta(0):
-    #                 if current_duration <= remaining_gap:
-    #                     # Créer l'événement complet
-    #                     events.append(
-    #                         self.create_event(
-    #                             current_card, gap.lower, gap.lower + current_duration
-    #                         )
-    #                     )
-    #                     gap = P.closed(gap.lower + current_duration, gap.upper)
-    #                     current_card = next(card_iter)
-    #                     current_duration = self.estimate_duration(current_card)
-    #                     remaining_gap = gap.upper - gap.lower
-    #                 else:
-    #                     # Utiliser une partie du gap
-    #                     events.append(
-    #                         self.create_event(
-    #                             current_card, gap.lower, gap.lower + remaining_gap
-    #                         )
-    #                     )
-    #                     current_duration -= remaining_gap
-    #                     break
-
-    #     except StopIteration:
-    #         pass
-
-    #     for event in events:
-    #         event.save_to_calendar(self.work_calendar)
-
-    #     return events
 
     def add_work_breaks(
         self,

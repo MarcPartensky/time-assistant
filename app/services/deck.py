@@ -5,12 +5,13 @@ from deck.models import Card, Board, Stack, Label
 from requests.auth import HTTPBasicAuth
 from app.services.logger import logger
 from typing import List
-from app.env import *
 
-auth = HTTPBasicAuth(os.environ["NEXTCLOUD_USER"], os.environ["NEXTCLOUD_PASSWORD"])
+from app.env import settings
+
+auth = HTTPBasicAuth(settings.nextcloud_user, settings.nextcloud_password)
 
 nc = NextCloudDeckAPI(
-    NEXTCLOUD_URL,
+    settings.nextcloud_url,
     auth,
     ssl_verify=True,
 )
@@ -55,7 +56,7 @@ def get_label_id_by_name(board_id: str, label_name: str):
         raise LogException(status_code=500, detail=str(e))
 
 
-NEXTCLOUD_BOARD_ID = get_board_id_by_name(str(NEXTCLOUD_BOARD))
+NEXTCLOUD_BOARD_ID = get_board_id_by_name(settings.nextcloud_board)
 
 
 def get_boards():

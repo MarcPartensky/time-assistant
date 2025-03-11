@@ -16,15 +16,20 @@ from nextcloud import NextCloud
 # import requests
 
 # from app.services.logger import logger
-from app.env import *
+# from app.env import *
+from app.env import settings
 
-CALENDAR_NAME = "Personal"
-CALENDAR_URL = f"{NEXTCLOUD_URL}/remote.php/dav/calendars/{NEXTCLOUD_USER}"
+CALENDAR_NAME = settings.calendar_name
+# CALENDAR_URL = (
+#     f"{settings.nextcloud_url}/remote.php/dav/calendars/{settings.nextcloud_user}"
+# )
 
-print(CALENDAR_URL)
+# print(CALENDAR_URL)
 
 client = caldav.DAVClient(
-    CALENDAR_URL, username=NEXTCLOUD_USER, password=NEXTCLOUD_PASSWORD
+    settings.calendar_url,
+    username=settings.nextcloud_user,
+    password=settings.nextcloud_password,
 )
 
 principal = client.principal()
@@ -324,6 +329,10 @@ def modify_description():
     # Appliquer les modifications
     success = modify_event(original_event.uid, event)
     return {"success": success, "events": get_events()}
+
+
+def get_current_event_and_time_left():
+    """Get the current and event and how much time is left to do the task."""
 
 
 if __name__ == "__main__":
