@@ -111,6 +111,16 @@ def reorder_card(*args, **kwargs):
     return nc.reorder_card(*args, **kwargs)
 
 
+def get_top_priority(board_name: str) -> Card:
+    """Return the top priority card."""
+    board = get_board_by_name(board_name)
+    stacks = get_stacks_by_board(board)
+    stacks.sort(key=lambda stack: stack.order)
+    cards = stacks[0].cards
+    cards.sort(key=lambda card: card.order)
+    return cards[0]
+
+
 # def archive_done_tasks(board_name: str) -> List[Card]:
 #     """Read all the cards from the board and find the tasks that are done.
 #     Then archive them and return them."""

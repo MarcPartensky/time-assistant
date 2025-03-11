@@ -190,6 +190,11 @@ async def clean(days: int = 1):
     return scheduler.clean_deck_events(t1, t2)
 
 
+@router.get("/top-priority/{board_name}")
+async def get_top_priority(board_name: str):
+    return deck.get_top_priority(board_name)
+
+
 # @router.get("/archive-done-tasks/{board_name}")
 # async def archive_done_tasks(board_name: str):
 #     return deck.archive_done_tasks(board_name)
