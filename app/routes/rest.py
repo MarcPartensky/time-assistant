@@ -15,6 +15,9 @@ from app.services.scheduler import Scheduler
 import datetime
 import portion as P
 
+from env import TIMEZONE
+
+ZONEINFO = ZoneInfo(TIMEZONE)
 
 router = APIRouter()
 
@@ -106,7 +109,7 @@ async def get_events():
 @router.get("/gaps")
 @router.get("/gaps/{days}")
 async def get_gaps(days: int = 1):
-    t1 = datetime.datetime.now(ZoneInfo("Europe/Paris"))
+    t1 = datetime.datetime.now(ZONEINFO)
     t2 = t1 + datetime.timedelta(days)
 
     events = calendar.get_events(t1, t2)
@@ -118,7 +121,7 @@ async def get_gaps(days: int = 1):
 @router.get("/trimed-gaps")
 @router.get("/trimed-gaps/{days}")
 async def get_trimed_gaps(days: int = 1):
-    t1 = datetime.datetime.now(ZoneInfo("Europe/Paris"))
+    t1 = datetime.datetime.now(ZONEINFO)
     t2 = t1 + datetime.timedelta(days)
 
     events = calendar.get_events(t1, t2)
@@ -136,7 +139,7 @@ async def get_trimed_gaps(days: int = 1):
 
 @router.get("/schedule/{board_name}/{days}")
 async def schedule(board_name: str, days: int = 1):
-    t1 = datetime.datetime.now(ZoneInfo("Europe/Paris"))
+    t1 = datetime.datetime.now(ZONEINFO)
     t2 = t1 + datetime.timedelta(days)
 
     board = deck.get_board_by_name(board_name)
@@ -160,7 +163,7 @@ async def modify():
 @router.get("/sleep")
 async def sleep():
     days = 1
-    t1 = datetime.datetime.now(ZoneInfo("Europe/Paris"))
+    t1 = datetime.datetime.now(ZONEINFO)
     t2 = t1 + datetime.timedelta(days)
 
     events = calendar.get_events(t1, t2)
@@ -185,13 +188,14 @@ async def sort_by_priority(board_name: str):
 async def clean(days: int = 1):
     events = calendar.get_events()
     scheduler = Scheduler(events)
-    t1 = datetime.datetime.now(ZoneInfo("Europe/Paris"))
+    t1 = datetime.datetime.now(ZONEINFO)
     t2 = t1 + datetime.timedelta(days)
     return scheduler.clean_deck_events(t1, t2)
 
 
 @router.get("/top-priority/{board_name}")
 async def get_top_priority(board_name: str):
+    """Return the top priority card to do."""
     return deck.get_top_priority(board_name)
 
 
