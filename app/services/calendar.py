@@ -6,25 +6,15 @@ from dateutil.tz import gettz
 from datetime import datetime, timedelta
 from ics import Calendar, Event
 from ics.alarm import DisplayAlarm
-from ics.grammar.parse import ContentLine
-
-from collections import OrderedDict
 from typing import List, Optional, Dict
 
-from nextcloud import NextCloud
-
-# import requests
-
+# from ics.grammar.parse import ContentLine
+# from collections import OrderedDict
+# from nextcloud import NextCloud
 # from app.services.logger import logger
-# from app.env import *
-from app.env import settings
 
-CALENDAR_NAME = settings.calendar_name
-# CALENDAR_URL = (
-#     f"{settings.nextcloud_url}/remote.php/dav/calendars/{settings.nextcloud_user}"
-# )
+from app.settings import settings
 
-# print(CALENDAR_URL)
 
 client = caldav.DAVClient(
     settings.calendar_url,
@@ -155,7 +145,9 @@ def get_calendar(name: str) -> Optional[caldav.Calendar]:
 
 
 def modify_event(
-    event_uid: str, new_event: SmartEvent, calendar_name: str = CALENDAR_NAME
+    event_uid: str,
+    new_event: SmartEvent,
+    calendar_name: str = settings.personal_calendar,
 ) -> bool:
     """
     Modifie un événement en utilisant un objet ics.Event
@@ -272,7 +264,7 @@ def ics_to_vobject(ics_event: SmartEvent) -> vobject.base.Component:
 
 
 def get_events(
-    # calendar_name: str = CALENDAR_NAME,
+    # calendar_name: str = PERSONAL_CALENDAR,
     start: datetime = start_of_day,
     end: datetime = end_of_day,
 ) -> list[SmartEvent]:

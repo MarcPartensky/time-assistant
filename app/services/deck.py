@@ -6,7 +6,7 @@ from requests.auth import HTTPBasicAuth
 from app.services.logger import logger
 from typing import List
 
-from app.env import settings
+from app.settings import settings
 
 auth = HTTPBasicAuth(settings.nextcloud_user, settings.nextcloud_password)
 

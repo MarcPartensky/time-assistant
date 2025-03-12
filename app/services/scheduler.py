@@ -15,21 +15,18 @@ from datetime import datetime, timedelta, time
 from zoneinfo import ZoneInfo
 import ast
 
+from app.models.interval import Interval
+from app.settings import settings
+
 # planification uniquement dans ces zones horaires
-DEFAULT_WORK_START = 9
-DEFAULT_WORK_END = 20
+DEFAULT_WORK_START = settings.work_start
+DEFAULT_WORK_END = settings.work_end
 
-PLAN_DAYS_LIMIT = 1  # Nombre de jours à planifier
+PLAN_DAYS_LIMIT = settings.plan_day_limit  # Nombre de jours à planifier
 
-DEFAULT_TASK_DURATION = timedelta(hours=2, minutes=45)  # en heure
-
-
-class TimeGap(NamedTuple):
-    t1: datetime
-    t2: datetime
-
-    def __str__(self):
-        return "TG" + str((self.t1, self.t2))
+DEFAULT_TASK_DURATION = timedelta(
+    hours=settings.task_duration_hours, minutes=settings.task_duration_minutes
+)  # en heure
 
 
 class Scheduler:
@@ -43,19 +40,26 @@ class Scheduler:
         calendars: List[str] = [],
     ):
         self.events = events
+        self.calendars = calendars
+
         self.work_start = work_start
         self.work_stop = work_stop
-        self.calendars = calendars
-        self.work_calendar = "Taff"
-        self.personal_calendar = "Personal"
-        self.zoneinfo = ZoneInfo("Europe/Paris")
+        self.lunch_start = settings.lunch_start
+        self.lunch_end = settings.lunch_end
+        self.dinner_start = settings.dinner_start
+        self.dinner_end = settings.dinner_end
+
+        self.work_calendar = settings.work_calendar
+        self.personal_calendar = settings.personal_calendar
+        self.zoneinfo = ZoneInfo(settings.timezone)
+
         self.priorities = [
             "Top priority",
             "High priority",
             "Action needed",
             "Low priority",
         ]
-        self.category = "Deck"  # Tag given on all created events
+        self.category = settings.deck_category
 
     def hydrate(self, board: Board):
         self.board = board
@@ -73,16 +77,16 @@ class Scheduler:
             sorted_cards.extend(cards)
         self.cards = sorted_cards
 
-    def get_gaps(self, t1: datetime, t2: datetime) -> List[P.Interval]:
+    def get_gaps(self, t1: datetime, t2: datetime) -> Interval:
         """Trouve les disponibilités entre les événements calendrier."""
         if t1 >= t2:
-            return []
+            return P.empty()
 
         # Créer un intervalle global [t1, t2]
         total_interval = P.closed(t1, t2)
 
         # Créer l'union de tous les événements
-        events_union = P.Interval(
+        events_union = Interval(
             *[
                 P.closed(
                     event.begin.astimezone(self.zoneinfo),
@@ -96,45 +100,7 @@ class Scheduler:
         # Calculer les gaps = total_interval - events_union
         gaps = total_interval - events_union
 
-        return list(gaps) if not gaps.empty else []
-
-    def create_sleep_events(self):
-        """Create sleep events"""
-        events = []
-
-        today = datetime.today().date()
-        begin_of_sleep = datetime.combine(today, datetime.min.time()).astimezone(
-            self.zoneinfo
-        )  # 00:00:00
-        end_of_sleep = begin_of_sleep + timedelta(hours=9)
-        gaps = self.get_gaps(begin_of_sleep, end_of_sleep)
-
-        print(end_of_sleep)
-        # print(gaps[0][1] - timed)
-        first_gap = gaps[0]
-        if first_gap[1] - timedelta(hours=1) < end_of_sleep:
-            end_of_sleep = first_gap[1] - timedelta(hours=1)
-        print(end_of_sleep)
-
-        event = Event(name="Sleep", begin=begin_of_sleep, end=end_of_sleep)
-
-        target_calendar = calendar.get_calendar(self.personal_calendar)
-
-        if not target_calendar:
-            raise ValueError(f"Calendar '{self.work_calendar}' not found")
-
-        events.append(event)
-        print(event.__dict__)
-
-        vcal = calendar.ics_to_vobject(event)
-        ical_data = vcal.serialize()
-        target_calendar.add_event(ical_data)
-
-        return events
-
-    def create_deck_events(self):
-        events = []
-        return events
+        return gaps
 
     def sort_card_by_priority(self) -> List[Card]:
         """Tri par ordre de priorité"""
@@ -180,7 +146,7 @@ class Scheduler:
         """Return time estimation of card in seconds."""
         return DEFAULT_TASK_DURATION
 
-    def create_event(self, card: Card, interval: P.Interval) -> SmartEvent:
+    def create_event(self, card: Card, interval: Interval) -> SmartEvent:
         """Create new event using a card, t1 and t2."""
         categories = [self.category + str(card.id)]
         if card.labels:
@@ -224,18 +190,15 @@ class Scheduler:
                     dav_event.delete()
         return removed_events
 
-    def trim_timegaps(self, gaps: List[P.Interval]) -> List[P.Interval]:
+    def trim_timegaps(self, gaps: Interval) -> Interval:
         """Filtre les gaps pour ne garder que les heures de travail."""
-        if not gaps:
-            return []
-
-        # Créer l'union de tous les gaps
-        gaps_union = P.Interval(*gaps)
+        if gaps.empty:
+            return P.empty()
 
         # Générer les plages horaires de travail
         work_hours = P.empty()
-        start_date = min(gap.lower.date() for gap in gaps)
-        end_date = max(gap.upper.date() for gap in gaps)
+        start_date = min(interval.lower.date() for interval in gaps)
+        end_date = max(interval.upper.date() for interval in gaps)
 
         current_date = start_date
         while current_date <= end_date:
@@ -251,16 +214,16 @@ class Scheduler:
             current_date += timedelta(days=1)
 
         # Intersection entre les gaps et les heures de travail
-        trimmed = gaps_union & work_hours
+        trimmed = gaps & work_hours
 
-        return list(trimmed) if not trimmed.empty else []
+        return trimmed
 
     def add_work_breaks(
         self,
-        gaps: List[P.Interval],
+        gaps: List[Interval],
         work_duration: timedelta = DEFAULT_TASK_DURATION,
         break_duration: timedelta = timedelta(minutes=15),
-    ) -> List[P.Interval]:
+    ) -> List[Interval]:
         """Découpe les plages horaires en ajoutant des pauses régulières."""
         new_gaps = []
 
@@ -284,11 +247,24 @@ class Scheduler:
 
         return new_gaps
 
-    def schedule(self, t1: datetime, t2: datetime) -> List[SmartEvent]:
+    def schedule(
+        self,
+        t1: datetime,
+        t2: datetime,
+    ) -> List[SmartEvent]:
         self.clean_deck_events(t1, t2)
         gaps = self.get_gaps(t1, t2)
-        gaps = self.trim_timegaps(gaps)
-        gaps = self.add_work_breaks(gaps)
+        lunch_interval = self.create_daily_events(
+            t1, t2, settings.lunch_start, settings.lunch_end
+        )
+        dinner_interval = self.create_daily_events(
+            t1, t2, settings.dinner_start, settings.dinner_end
+        )
+        eat_interval = lunch_interval | dinner_interval
+        print("eat interval:", eat_interval)
+        gaps -= eat_interval
+        # gaps = self.trim_timegaps(gaps + lunch_gaps + dinner_gaps)
+        # gaps |= self.add_work_breaks(gaps)
 
         if not gaps or not self.cards:
             return []
@@ -336,5 +312,50 @@ class Scheduler:
 
         for event in events:
             event.save_to_calendar(self.work_calendar)
-
         return events
+
+    def create_daily_events(
+        self,
+        t1: datetime,
+        t2: datetime,
+        g1: int,
+        g2: int,
+    ) -> Interval:
+        """Create daily events in the schedule."""
+        daily_events = P.empty()
+        current_date = t1.date()
+        end_date = t2.date()
+
+        while current_date <= end_date:
+            # Create daily start and end times for the current date
+            daily_start_time = time(hour=g1)
+            daily_end_time = time(hour=g2)
+            daily_start_dt = datetime.combine(current_date, daily_start_time).replace(
+                tzinfo=self.zoneinfo
+            )
+            daily_end_dt = datetime.combine(current_date, daily_end_time).replace(
+                tzinfo=self.zoneinfo
+            )
+
+            # Adjust daily_end_dt if it's on the next day
+            if daily_end_dt <= daily_start_dt:
+                daily_end_dt += timedelta(days=1)
+
+            # Create the interval for the current day's daily
+            day_daily_interval = P.closed(daily_start_dt, daily_end_dt)
+
+            # Intersect with the overall time range [t1, t2]
+            valid_interval = day_daily_interval & P.closed(t1, t2)
+
+            if not valid_interval.empty:
+                daily_events |= valid_interval
+
+            current_date += timedelta(days=1)
+
+        return daily_events
+
+    def create_sleep_events(self, t1: datetime, t2: datetime) -> Interval:
+        """Create sleep events"""
+        sleep_events = self.create_daily_events(t1, t2, 0, settings.work_start)
+        # events = self.create_daily_events(t1, t2, settings.work_end, 24)
+        return sleep_events

@@ -10,12 +10,14 @@ from app.services.logger import logger
 from app.services.deck import nc
 import app.services.deck as deck
 import app.services.calendar as calendar
-
 from app.services.scheduler import Scheduler
+
+from app.models.interval import Interval
+
 import datetime
 import portion as P
 
-from app.env import settings
+from app.settings import settings
 
 ZONEINFO = ZoneInfo(settings.timezone)
 
@@ -135,6 +137,25 @@ async def get_trimed_gaps(days: int = 1):
     print(len(gaps))
 
     return [serialize_interval(gap) for gap in gaps]
+
+
+@router.get("/eat-gaps/{days}")
+async def eat_gaps(days: int = 1):
+    t1 = datetime.datetime.now(ZONEINFO)
+    t2 = t1 + datetime.timedelta(days)
+
+    events = calendar.get_events(t1, t2)
+    scheduler = Scheduler(events)
+
+    lunch_interval = scheduler.create_daily_events(
+        t1, t2, settings.lunch_start, settings.lunch_end
+    )
+    dinner_interval = scheduler.create_daily_events(
+        t1, t2, settings.dinner_start, settings.dinner_end
+    )
+    interval = Interval(lunch_interval | dinner_interval)
+    print(interval)
+    return interval.to_json()
 
 
 @router.get("/schedule/{board_name}/{days}")
