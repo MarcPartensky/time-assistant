@@ -38,13 +38,8 @@ async def health():
     return {"message": "OK"}
 
 
-@router.post("/echo")
-async def echo_message(message: Message):
-    return {"message": message.text}
-
-
 @router.get("/boards")
-async def get_all_boards():
+async def get_boards():
     return deck.get_boards()
 
 
@@ -83,7 +78,7 @@ async def get_cards_by_stack_id(stack_id: str):
 
 @router.get("/board/{board_name}/labels")
 async def get_labels(board_name: str):
-    return deck.get_board_labels(board_name)
+    return deck.get_labels_by_board_name(board_name)
 
 
 class Color(BaseModel):
