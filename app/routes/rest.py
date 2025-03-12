@@ -95,12 +95,22 @@ async def show_color(color: Color):
     return color
 
 
-@router.get("/events")
-async def get_events():
+@router.get("/all-events")
+async def get_all_events():
     events = calendar.get_events()
     for event in events:
         print(event)
     return events
+
+
+@router.get("/events/{days}")
+async def get_events(days: int = 1):
+    t1 = datetime.datetime.now(ZONEINFO)
+    t2 = t1 + datetime.timedelta(days)
+
+    events = calendar.get_events(t1, t2)
+    scheduler = Scheduler(events)
+    return scheduler.get_today_events()
 
 
 @router.get("/gaps")
@@ -150,6 +160,19 @@ async def eat_gaps(days: int = 1):
     )
     interval = Interval(lunch_interval | dinner_interval)
     print(interval)
+    return interval.to_json()
+
+
+@router.get("/availability/{days}")
+async def availability(days: int = 1):
+    t1 = datetime.datetime.now(ZONEINFO)
+    t2 = t1 + datetime.timedelta(days)
+
+    events = calendar.get_events(t1, t2)
+    scheduler = Scheduler(events)
+    interval = scheduler.get_availability(t1, t2)
+    print(type(interval))
+
     return interval.to_json()
 
 

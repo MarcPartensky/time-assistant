@@ -3,8 +3,6 @@ from deck.models import Card, Board, Stack, Label
 from typing import List, Tuple, NamedTuple
 import portion as P
 
-import vobject
-
 import app.services.deck as deck
 import app.services.calendar as calendar
 
@@ -51,7 +49,7 @@ class Scheduler:
 
         self.work_calendar = settings.work_calendar
         self.personal_calendar = settings.personal_calendar
-        self.zoneinfo = ZoneInfo(settings.timezone)
+        self.zoneinfo = settings.zoneinfo
 
         self.priorities = [
             "Top priority",
@@ -80,7 +78,7 @@ class Scheduler:
     def get_gaps(self, t1: datetime, t2: datetime) -> Interval:
         """Trouve les disponibilités entre les événements calendrier."""
         if t1 >= t2:
-            return P.empty()
+            return Interval(P.empty())
 
         # Créer un intervalle global [t1, t2]
         total_interval = P.closed(t1, t2)
@@ -96,11 +94,7 @@ class Scheduler:
                 if event.begin < event.end
             ]
         )
-
-        # Calculer les gaps = total_interval - events_union
-        gaps = total_interval - events_union
-
-        return gaps
+        return total_interval - events_union
 
     def sort_card_by_priority(self) -> List[Card]:
         """Tri par ordre de priorité"""
@@ -190,34 +184,6 @@ class Scheduler:
                     dav_event.delete()
         return removed_events
 
-    def trim_timegaps(self, gaps: Interval) -> Interval:
-        """Filtre les gaps pour ne garder que les heures de travail."""
-        if gaps.empty:
-            return P.empty()
-
-        # Générer les plages horaires de travail
-        work_hours = P.empty()
-        start_date = min(interval.lower.date() for interval in gaps)
-        end_date = max(interval.upper.date() for interval in gaps)
-
-        current_date = start_date
-        while current_date <= end_date:
-            work_start = datetime.combine(
-                current_date, time(hour=self.work_start)
-            ).replace(tzinfo=self.zoneinfo)
-
-            work_end = datetime.combine(
-                current_date, time(hour=self.work_stop)
-            ).replace(tzinfo=self.zoneinfo)
-
-            work_hours |= P.closed(work_start, work_end)
-            current_date += timedelta(days=1)
-
-        # Intersection entre les gaps et les heures de travail
-        trimmed = gaps & work_hours
-
-        return trimmed
-
     def add_work_breaks(
         self,
         gaps: List[Interval],
@@ -247,13 +213,11 @@ class Scheduler:
 
         return new_gaps
 
-    def schedule(
-        self,
-        t1: datetime,
-        t2: datetime,
-    ) -> List[SmartEvent]:
-        self.clean_deck_events(t1, t2)
-        gaps = self.get_gaps(t1, t2)
+    def get_availability(self, t1: datetime, t2: datetime) -> Interval:
+        """Consider all parameters to get my availibility interval."""
+        availability = self.get_gaps(t1, t2)
+
+        # eat intervals
         lunch_interval = self.create_daily_events(
             t1, t2, settings.lunch_start, settings.lunch_end
         )
@@ -261,11 +225,20 @@ class Scheduler:
             t1, t2, settings.dinner_start, settings.dinner_end
         )
         eat_interval = lunch_interval | dinner_interval
-        print("eat interval:", eat_interval)
-        gaps -= eat_interval
+
+        availability -= eat_interval
         # gaps = self.trim_timegaps(gaps + lunch_gaps + dinner_gaps)
         # gaps |= self.add_work_breaks(gaps)
+        return Interval(availability)
 
+    def schedule(
+        self,
+        t1: datetime,
+        t2: datetime,
+    ) -> List[SmartEvent]:
+        """Schedule my calendar between t1 and t2."""
+        self.clean_deck_events(t1, t2)
+        gaps = self.get_availability(t1, t2)
         if not gaps or not self.cards:
             return []
 
@@ -359,3 +332,16 @@ class Scheduler:
         sleep_events = self.create_daily_events(t1, t2, 0, settings.work_start)
         # events = self.create_daily_events(t1, t2, settings.work_end, 24)
         return sleep_events
+
+    def get_today_events(self) -> List[SmartEvent]:
+        """Renvoie tous les événements prévus aujourd'hui dans le calendrier."""
+        now = datetime.now(self.zoneinfo)
+        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = start_of_day + timedelta(days=1)
+
+        return [
+            event
+            for event in self.events
+            if event.begin.astimezone(self.zoneinfo) < end_of_day
+            and event.end.astimezone(self.zoneinfo) > start_of_day
+        ]
