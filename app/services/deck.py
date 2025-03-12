@@ -56,9 +56,6 @@ def get_label_id_by_name(board_id: str, label_name: str):
         raise LogException(status_code=500, detail=str(e))
 
 
-NEXTCLOUD_BOARD_ID = get_board_id_by_name(settings.nextcloud_board)
-
-
 def get_boards():
     return nc.get_boards()
 
@@ -133,13 +130,6 @@ def get_top_priority(board_name: str) -> Card:
 #         card = stack.cards[0]
 
 #     return done_cards
-
-
-# def update_card(card_id: int, order: int, title: str, owner: str):
-# card_id=card.id,
-# order=50,
-# title=card.title,
-# owner=card.owner,
 
 
 # def archive_completed(board_name, str, stack_name: str):
