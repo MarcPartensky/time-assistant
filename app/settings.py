@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List
 from dotenv import load_dotenv
 from zoneinfo import ZoneInfo
+import caldav
 
 load_dotenv()
 
@@ -18,7 +20,6 @@ class Settings(BaseSettings):
     debug: bool = False
     log_level: str = "Info"
     timezone: str = "Europe/Paris"
-    zoneinfo: ZoneInfo = ZoneInfo(timezone)
     board_name: str = "-Todolist"
     deck_category: str = "Deck"
 
@@ -27,8 +28,8 @@ class Settings(BaseSettings):
     fitness_calendar: str = "Fitness"
 
     plan_day_limit: int = 1
-    task_duration_hours: int = 2
-    task_duration_minutes: int = 45
+    task_duration_hours: int = 3
+    task_duration_minutes: int = 0
 
     work_start: int = 9
     work_end: int = 20
@@ -37,9 +38,34 @@ class Settings(BaseSettings):
     dinner_start: int = 20
     dinner_end: int = 21
 
+    api_key: str = "osef"
+
+    @property
+    def zoneinfo(self) -> ZoneInfo:
+        return ZoneInfo(self.timezone)
+
     @property
     def calendar_url(self):
         return f"{self.nextcloud_url}/remote.php/dav/calendars/{self.nextcloud_user}"
+
+    @property
+    def caldav_client(self) -> caldav.DAVClient:
+        """Return caldav client"""
+        return caldav.DAVClient(
+            self.calendar_url,
+            username=self.nextcloud_user,
+            password=self.nextcloud_password,
+        )
+
+    @property
+    def principal(self) -> caldav.Principal:
+        """Return principal"""
+        return self.caldav_client.principal()
+
+    @property
+    def calendars(self) -> List[caldav.Calendar]:
+        """Return calendars"""
+        return self.principal.calendars()
 
 
 settings = Settings()
