@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import APIKeyHeader
+
 from app.models.schemas import Message
 from pydantic import BaseModel
 from collections import OrderedDict
@@ -21,7 +23,20 @@ from app.settings import settings
 
 ZONEINFO = ZoneInfo(settings.timezone)
 
-router = APIRouter()
+# Configuration de la sécurité
+api_key_header = APIKeyHeader(name="X-API-Key")
+
+
+async def get_api_key(api_key: str = Depends(api_key_header)):
+    if api_key != settings.api_key:
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+    return api_key
+
+
+if settings.debug:  # pas de check en debug
+    router = APIRouter()
+else:
+    router = APIRouter(dependencies=[Depends(get_api_key)])
 
 
 def serialize_interval(interval: P.Interval) -> Tuple[str]:
@@ -33,7 +48,7 @@ async def root():
     return {"message": "Bienvenue dans mon projet FastAPI !"}
 
 
-@router.get("/live")
+@router.get("/live", dependencies=[])
 async def health():
     return {"message": "OK"}
 
@@ -110,7 +125,9 @@ async def get_events(days: int = 1):
 
     events = calendar.get_events(t1, t2)
     scheduler = Scheduler(events)
-    return scheduler.get_today_events()
+    events = scheduler.get_today_events()
+    print(type(events[0]))
+    return events
 
 
 @router.get("/gaps")
@@ -188,9 +205,6 @@ async def schedule(board_name: str, days: int = 1):
     scheduler.hydrate(board)
     events = scheduler.schedule(t1, t2)
 
-    gaps = scheduler.get_gaps(t1, t2)
-    gaps = scheduler.trim_timegaps(gaps)
-
     return events
 
 
@@ -236,6 +250,18 @@ async def clean(days: int = 1):
 async def get_top_priority(board_name: str):
     """Return the top priority card to do."""
     return deck.get_top_priority(board_name)
+
+
+@router.get("/current-events")
+async def get_current_event():
+    t = datetime.datetime.now(ZONEINFO)
+    return calendar.get_events_at(t)
+
+
+@router.get("/focus-event")
+async def get_focus():
+    t = datetime.datetime.now(ZONEINFO)
+    return calendar.get_focus_event_at(t)
 
 
 # @router.get("/archive-done-tasks/{board_name}")
