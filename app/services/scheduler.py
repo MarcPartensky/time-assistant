@@ -1,4 +1,3 @@
-from .calendar import SmartEvent, Event
 from deck.models import Card, Board, Stack, Label
 from typing import List, Tuple, NamedTuple
 import portion as P
@@ -14,6 +13,8 @@ from zoneinfo import ZoneInfo
 import ast
 
 from app.models.interval import Interval
+from app.models.smartevent import SmartEvent
+
 from app.settings import settings
 
 # planification uniquement dans ces zones horaires
@@ -184,6 +185,25 @@ class Scheduler:
                     dav_event.delete()
         return removed_events
 
+    # def clean_all_deck_events(self) -> int:
+    #     """Remove all vcal events that have a Category Deck* (for instance Deck1234)"""
+    #     calendar_obj = calendar.get_calendar(self.work_calendar)
+    #     if not calendar_obj:
+    #         return 0
+
+    #     # Récupérer les événements existants
+    #     removed_events = 0
+
+    #     for dav_event in self.events:
+    #         vevent = dav_event.vobject_instance.vevent
+    #         if hasattr(vevent, "categories"):
+    #             categories = vevent.categories.value
+    #             # Vérifier les catégories commençant par 'Deck'
+    #             if any(cat.strip().startswith(self.category) for cat in categories):
+    #                 removed_events += 1
+    #                 dav_event.delete()
+    #     return removed_events
+
     def add_work_breaks(
         self,
         gaps: List[Interval],
@@ -225,9 +245,12 @@ class Scheduler:
             t1, t2, settings.dinner_start, settings.dinner_end
         )
         eat_interval = lunch_interval | dinner_interval
-
         availability -= eat_interval
-        # gaps = self.trim_timegaps(gaps + lunch_gaps + dinner_gaps)
+
+        # sleep
+        sleep_interval = self.create_sleep_events(t1, t2)
+        availability -= sleep_interval
+
         # gaps |= self.add_work_breaks(gaps)
         return Interval(availability)
 
