@@ -40,6 +40,13 @@ class Settings(BaseSettings):
 
     api_key: str = "osef"
 
+    priorities: List[str] = [
+        "Top priority",
+        "High priority",
+        "Action needed",
+        "Low priority",
+    ]
+
     @property
     def zoneinfo(self) -> ZoneInfo:
         return ZoneInfo(self.timezone)

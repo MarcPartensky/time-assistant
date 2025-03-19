@@ -52,12 +52,7 @@ class Scheduler:
         self.personal_calendar = settings.personal_calendar
         self.zoneinfo = settings.zoneinfo
 
-        self.priorities = [
-            "Top priority",
-            "High priority",
-            "Action needed",
-            "Low priority",
-        ]
+        self.priorities = settings.priorities
         self.category = settings.deck_category
 
     def hydrate(self, board: Board):
