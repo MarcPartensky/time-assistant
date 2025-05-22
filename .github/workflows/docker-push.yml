@@ -60,5 +60,5 @@ jobs:
         port: ${{ secrets.PORT }}
         script: |
           cd ~/git/docker/services
-          docker compose -f time-assistant.yml pull
-          docker compose -f time-assistant.yml up -d --force-recreate time-assistant
+          docker compose -f time-assistant/compose.yml pull
+          docker compose -f time-assistant/compose.yml up -d --force-recreate time-assistant
